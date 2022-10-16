@@ -14,3 +14,10 @@ dimensions of the driving noise is smaller than it is in the extrinsic
 setting. The estimations solely concern themselves with extrinsic sample paths
 and recovering the intrinsic geometry from observing many paths.
 
+## Installation
+
+You can install the package via from github on windows in command line with:
+
+``` 
+python -m pip install git+https://github.com/shill1729/ManifoldBm.git
+```
