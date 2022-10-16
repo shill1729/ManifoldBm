@@ -31,14 +31,6 @@ symbolically compute
 4. The intrinsic and extrinsic diffusion coefficient
 ```python
 from ManifoldBm.ManifoldLearn import *
-tn = 10**-5
-C = 0.2
-a = 0.01
-b = 5
-nens = 100
-npaths = 60
-ntime = 20
-x0 = np.linspace(a, b, nens)
 # Setting up the synthetic process
 x, y, z= symbols("x y z", real=True)
 F1 = x**2
@@ -52,7 +44,9 @@ dim = (D,d)
 print("Extrinsic vs Intrinsic dim ="+str(dim))
 print("Chart")
 print(chart)
+# Initialize the BM
 bm = IntrinsicBm(param, chart)
 print(bm)
 print(bm.manifold)
+    
 ```
