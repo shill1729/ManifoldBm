@@ -57,8 +57,14 @@ tensor of a manifold, having access to extrinsic sample paths, is
 to simple take covariances of each pair of coordinates across the 
 ensemble of paths, divide by the time horizon, and then perform an
 eigendecomposition. The metric tensor can be recovered carefully through
-the eigenvectors. See the paper (where?) or more details.
+the eigenvectors. See the paper (where?) for more details, but briefly,
+the algorithm is as follows:
 
+1. Observe $N$ sample paths of an extrinsic Brownian motion over a small time interval $[0,h]$ starting from a point $x\in \mathbb{R}^D$.
+2. Approximate the orthogonal projection matrix $P$ as $\frac{1}{h} S$ where $S$ is the sample covariance matrix of the terminal values.
+3. Compute the eigendecomposition of $P$. Let $v_1(x),\dotsc, v_p(x)$ be the eigenvectors associated to the $p=D-d$ smallest eigenvalues.
+4. The Jacobian of the (assumed) function defining the chart $(x_1,\dotsc, x_d, F(x_1,\dotsc, x_d))$ can be recovered as $J_i= -\pi(v_i(x))^T/\pi_{d+i}(v_i(x))$, where $J_i$ is the $i$-th row of $J$. Here $\pi_{d+i}(v)$ is $d+i$-th coordinate of $v$, while $\pi(v)$ is the first $d$ coordinates of $v$.
+5. The metric tensor is then $g=I+J^TJ$.
 ```python
 from ManifoldBm.ManifoldLearn import *
 
