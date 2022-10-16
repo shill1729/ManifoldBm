@@ -7,7 +7,7 @@ from sympy import lambdify, Piecewise
 from sympy import simplify, sqrt, symbols, Matrix, sin, cos, integrate, pi
 
 from ManifoldBms.ManifoldBm.sdes import euler_maruyama, sample_ensemble, estimate_cov
-from SympyRoutines import jacobian, divergence_matrix, gradient
+from ManifoldBms.ManifoldBm.SympyRoutines import jacobian, divergence_matrix, gradient
 
 
 def learn_synthetic_metric(y0, bm, extrinsic_param, f, tn=10 ** -3, npaths=1000, ntime=10):
@@ -279,6 +279,11 @@ class mle(object):
 
 
 class Manifold(object):
+    """
+        Python implementaiton of a manifold given a local chart based on
+        parameters. The objects to initialize are param, chart, simp=False.
+        These must be sympy Matrix objects.
+    """
     # How should we implement Manifold in python?
     # The user supplies the intrinsic coordinates and the local chart
     # The metric tensor is automatically computed but is optionally simplified.
@@ -336,6 +341,8 @@ class Manifold(object):
 
 
 class IntrinsicBm(object):
+    """ Define an intrinsic Brownian motion given a parameter set and chart.
+    """
     def __init__(self, param=None, chart=None, aux=None, manifold=None, simp=True):
         self.sigma_np = None
         self.mu_np = None

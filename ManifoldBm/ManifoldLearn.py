@@ -39,7 +39,7 @@ def metric_tensor_decomp(proj, d=1, scale=1):
     return metric_tensor, volume_density, np.mean(w[:p])
 
 
-def learn_manifold_1d(ensembles, h=10 ** -5, d=1, scale_fun=None, lam=None):
+def learn_manifold_1d(ensembles, h=10 ** -5, d=1):
     """ Given a collection of sample ensembles of a process, estimate the intrinsic metric tensor of the assumed
     underlying manifold.
 
@@ -55,21 +55,17 @@ def learn_manifold_1d(ensembles, h=10 ** -5, d=1, scale_fun=None, lam=None):
     volume_density = np.zeros(num_ensembles)
     avg_eigenvalues = np.zeros(num_ensembles)
     x = np.zeros((num_ensembles, d))
-    if scale_fun is None:
-        def scale_fun(w, lam=None):
-            return 1
     for i in range(num_ensembles):
         x[i] = ensembles[i, 0][0, :d]
-        scale = scale_fun(x[i], lam)
         proj = estimate_cov(ensembles[i], h)
-        g, v, w = metric_tensor_decomp(proj, d, scale)
+        g, v, w = metric_tensor_decomp(proj, d)
         metric_tensor[i] = g
         volume_density[i] = v
         avg_eigenvalues[i] = w
     return metric_tensor, volume_density, avg_eigenvalues, x
 
 
-def learn_metric_tensor(y0, tn, bm, npaths, ntime, D, p, c=None, lam=None):
+def learn_metric_tensor(y0, tn, bm, npaths, ntime, D, p):
     """ Learn the metric tensor at a point y0 on synthetic model
     """
     d = bm.manifold.param.shape[0]
@@ -86,15 +82,11 @@ def learn_metric_tensor(y0, tn, bm, npaths, ntime, D, p, c=None, lam=None):
         else:  # d>1 then ensemble is (N, n+1, d)
             X[i] = sample_path_coord(bm.manifold.param, bm.manifold.chart, Y[i], bm.aux, p)
     Ph = estimate_cov(X, tn)
-    if c is not None:
-        c0 = c(y0, lam)
-    else:
-        c0 = 1
-    g, volg, mwe = metric_tensor_decomp(Ph, d, c0)
+    g, volg, mwe = metric_tensor_decomp(Ph, d)
     return g, volg, Y, X
 
 
-def learn_metric_tensor_1d(y0, tn, bm, npaths, ntime, D, p, c=None, lam=None, plot=True):
+def learn_metric_tensor_1d(y0, tn, bm, npaths, ntime, D, p, plot=True):
     M = y0.shape[0]
     g = np.zeros(M)
     volg = np.zeros(M)
@@ -104,7 +96,7 @@ def learn_metric_tensor_1d(y0, tn, bm, npaths, ntime, D, p, c=None, lam=None, pl
         # fig = plt.figure(figsize=(6, 6))
         color = plt.cm.rainbow(np.linspace(0, 1, M))
     for i in range(M):
-        g[i], volg[i], Y, X = learn_metric_tensor(y0[i], tn, bm, npaths, ntime, D, p, c, lam)
+        g[i], volg[i], Y, X = learn_metric_tensor(y0[i], tn, bm, npaths, ntime, D, p)
         if plot:
             plt.subplot(221)
             if d == 1:
@@ -125,7 +117,7 @@ def learn_metric_tensor_1d(y0, tn, bm, npaths, ntime, D, p, c=None, lam=None, pl
     return g, volg
 
 
-def learn_metric_tensor_2d(y0, tn, bm, npaths, ntime, D, p, scale_fun=None, lam=None, plot=True):
+def learn_metric_tensor_2d(y0, tn, bm, npaths, ntime, D, p, plot=True):
     # print(y0[0].shape)
     M = y0[0].shape[0]
     d = bm.manifold.param.shape[0]
@@ -145,7 +137,7 @@ def learn_metric_tensor_2d(y0, tn, bm, npaths, ntime, D, p, scale_fun=None, lam=
             u1 = y0[0][j, k]
             u2 = y0[1][j, k]
             y01 = np.array([u1, u2])
-            g, gv, Y, X = learn_metric_tensor(y01, tn, bm, npaths, ntime, D, p, scale_fun, lam)
+            g, gv, Y, X = learn_metric_tensor(y01, tn, bm, npaths, ntime, D, p)
             gs[j, k] = g
             volg[j, k] = gv
             if plot:
@@ -167,7 +159,7 @@ def learn_metric_tensor_2d(y0, tn, bm, npaths, ntime, D, p, scale_fun=None, lam=
     return gs, volg
 
 
-def synthetic_test(x0, tn, drift, diffusion, bm, scale_fun, lam, nens, npaths, ntime, D, d, plot=True):
+def synthetic_test(x0, tn, drift, diffusion, bm, nens, npaths, ntime, D, d, plot=True):
     ensembles = np.zeros((nens, npaths, ntime + 1, D))
     color = None
     ax = None
@@ -193,7 +185,7 @@ def synthetic_test(x0, tn, drift, diffusion, bm, scale_fun, lam, nens, npaths, n
     if plot:
         ax[0, 0].set_title("Intrinsic sample paths")
         ax[0, 1].set_title("Extrinsic sample paths")
-    metric_tensor, volume_density, avg_eigenvalues, xx = learn_manifold_1d(ensembles, tn, d, scale_fun, lam)
+    metric_tensor, volume_density, avg_eigenvalues, xx = learn_manifold_1d(ensembles, tn, d)
 
     exact_vol = lambdify(param, bm.manifold.vol)
     # curve = lambdify(param, F)
@@ -221,7 +213,7 @@ def synthetic_test(x0, tn, drift, diffusion, bm, scale_fun, lam, nens, npaths, n
     return mse_arc_length_density
 
 
-def synthetic_test_1d(param, x0, tn, drift, diffusion, bm, scale_fun, lam, nens, npaths, ntime, D, d, plot=True):
+def synthetic_test_1d(param, x0, tn, drift, diffusion, bm, nens, npaths, ntime, D, d, plot=True):
     # Heavily depends on shape of x0
     # if x0 is 1-d array, no changes need to be made.
     # if x0 is 2d, we really need a mesh for best visualization.
@@ -271,7 +263,7 @@ def synthetic_test_1d(param, x0, tn, drift, diffusion, bm, scale_fun, lam, nens,
                     ax.plot3D(X[j][:, 0], X[j][:, 1], X[j][:, 2], c=color[i], alpha=0.5)
                 plt.title("Extrinsic sample paths")
         ensembles[i, :] = X
-    metric_tensor, volume_density, avg_eigenvalues, xx = learn_manifold_1d(ensembles, tn, d, scale_fun, lam)
+    metric_tensor, volume_density, avg_eigenvalues, xx = learn_manifold_1d(ensembles, tn, d)
     exact_vol = lambdify(param, bm.manifold.vol)
     # curve = lambdify(param, F)
     exact = exact_vol(xx)
@@ -303,7 +295,7 @@ def synthetic_test_1d(param, x0, tn, drift, diffusion, bm, scale_fun, lam, nens,
     return mse_arc_length_density
 
 
-def synthetic_test_2d(param, grid, tn, drift, diffusion, bm, scale_fun, lam, nens, npaths, ntime, D, d, plot=True):
+def synthetic_test_2d(param, grid, tn, drift, diffusion, bm, nens, npaths, ntime, D, d, plot=True):
     # Heavily depends on shape of x0
     # if x0 is 1-d array, no changes need to be made.
     # if x0 is 2d, we really need a mesh for best visualization.
@@ -358,7 +350,7 @@ def synthetic_test_2d(param, grid, tn, drift, diffusion, bm, scale_fun, lam, nen
                     ax.plot3D(X[j][:, 0], X[j][:, 1], X[j][:, 2], c=color[i], alpha=0.5)
                 plt.title("Extrinsic sample paths")
         ensembles[i, :] = X
-    metric_tensor, volume_density, avg_eigenvalues, xx = learn_manifold_1d(ensembles, tn, d, scale_fun, lam)
+    metric_tensor, volume_density, avg_eigenvalues, xx = learn_manifold_1d(ensembles, tn, d)
     exact_vol = lambdify(param, bm.manifold.vol)
     # curve = lambdify(param, F)
     exact = exact_vol(xx)
@@ -389,98 +381,11 @@ def synthetic_test_2d(param, grid, tn, drift, diffusion, bm, scale_fun, lam, nen
     return mse_arc_length_density
 
 
-if __name__ == "__main__":
-    tn = 10 ** -9
-    a = -3
-    b = 3
-    nens = 50
-    npaths = 50
-    ntime = 20
-    x0 = np.linspace(a, b, nens)
-    lam = np.array([0.2, 0.5])
-
-
-    def scale_fun(w, l):
-        return np.sqrt(l[0] * np.abs(w) + l[1])
-
-
-    # Setting up the synthetic process
-    x, y = symbols("x y", real=True)
-    F = exp(-sin(x) ** 2)
-    f = F - y
-    # Now we can set up an instrinsic BM
-    param = Matrix([x])
-    chart = Matrix([x, solve(f, y)[-1]])
-    d = param.shape[0]
-    D = chart.shape[0]
-    print("Chart")
-    print(chart)
-    bm = IntrinsicBm(param, chart)
-    drift, diffusion = bm.get_bm_coefs(d)
-    synthetic_test(x0, tn, drift, diffusion, bm, None, None, nens, npaths, ntime, D, d, True)
-
-
-    def cost_function(lam):
-        mse = synthetic_test(x0, tn, drift, diffusion, bm, scale_fun, lam, nens, npaths, ntime, D, d, False)
-        # print("Cost function = "+str(mse))
-        return mse
-
-
-    opt_lam = minimize(cost_function, lam, method="L-BFGS-B", bounds=[(0, 4), (0, 4)])
-    print(opt_lam)
-    opt_lam = opt_lam["x"]
-    synthetic_test(x0, tn, drift, diffusion, bm, scale_fun, opt_lam, nens, npaths, ntime, D, d, True)
-
-    # ensembles = np.zeros((nens, npaths, ntime+1, D))
-    # fig, ax = plt.subplots(2, 2)
-    # color = plt.cm.rainbow(np.linspace(0, 1, nens))
-    # for i in range(nens):
-    #     # Efficiently simulate in low dimension
-    #     Y = sample_ensemble(x0[i], tn, drift, diffusion, npaths, ntime, d, d)
-    #     ax[0,0].plot(np.linspace(0, tn, ntime+1),Y, c=color[i], alpha=0.5)
-    #     # Convert to high dimension
-    #     X = np.zeros((npaths, ntime + 1, D))
-    #     for j in range(npaths):
-    #         if len(Y.shape) == 2:  # d=1 then ensemble is (n+1, N)
-    #             X[j] = sample_path_coord(bm.manifold.param, bm.manifold.chart, Y[:, j])
-    #         else:  # d>1 then ensemble is (N, n+1, d)
-    #             X[j] = sample_path_coord(bm.manifold.param, bm.manifold.chart, Y[j])
-    #         ax[0,1].plot(X[j][:, 0], X[j][:, 1], c=color[i], alpha=0.5)
-    #
-    #     ensembles[i, :] = X
-    # ax[0,0].set_title("Intrinsic sample paths")
-    # ax[0, 1].set_title("Extrinsic sample paths")
-    # metric_tensor, volume_density, avg_eigenvalues, xx = learn_manifold(ensembles, tn, d, scale_fun, lam)
-    #
-    # exact_vol = lambdify(param, bm.manifold.vol)
-    # curve = lambdify(param, F)
-    # exact = exact_vol(xx)
-    # mse_arc_length_density = np.mean((exact-volume_density)**2)
-    # estimated_arc_length = cumulative_trapezoid(volume_density, x = xx[:,0], initial=0)
-    # true_arc_length = cumulative_trapezoid(exact[:,0], xx[:,0], initial=0)
-    # mse = np.mean((true_arc_length-estimated_arc_length)**2)
-    # print("Mean Square Error of arc-length density estimation = " + str(mse_arc_length_density))
-    # print("Mean Square Error of arc-length estimation = "+str(mse))
-    # print("Total arc length = "+str(true_arc_length[-1]))
-    #
-    # # Plot the volume-density
-    # # fig, ax = plt.subplots(2)
-    # ax[1, 0].plot(xx, volume_density)
-    # ax[1, 0].plot(xx, exact)
-    # ax[1, 0].set_title("Arc-length density")
-    # ax[1, 0].legend(["Estimated", "Exact"])
-    # ax[1, 1].plot(xx, estimated_arc_length)
-    # ax[1, 1].plot(xx, true_arc_length)
-    # ax[1, 1].set_title("Arc-length")
-    # ax[1, 1].legend(["Estimated", "Exact"])
-    # plt.show()
-
-
-def synthetic_test1(param, x0, tn, bm, npaths, ntime, D, p, scale_fun, lam, plot=True):
+def synthetic_test1(param, x0, tn, bm, npaths, ntime, D, p, plot=True):
     # if plot:
         # fig, ax = plt.subplots(2, 2)
         # fig = plt.figure(figsize=(6, 6))
-    metric_tensor, volume_density = learn_metric_tensor_1d(x0, tn, bm, npaths, ntime, D, p, scale_fun, lam)
+    metric_tensor, volume_density = learn_metric_tensor_1d(x0, tn, bm, npaths, ntime, D, p)
     exact_vol = lambdify(param, bm.manifold.vol)
     # curve = lambdify(param, F)
     exact = exact_vol(x0)
@@ -512,12 +417,8 @@ def synthetic_test1(param, x0, tn, bm, npaths, ntime, D, p, scale_fun, lam, plot
     return mse_arc_length_density
 
 
-def synthetic_test2(param, grid, tn, bm, npaths, ntime, D, p, scale_fun, lam, plot=True):
-    # if plot:
-    #
-    #     fig = plt.figure(figsize=(6, 6))
-    metric_tensor, volume_density = learn_metric_tensor_2d(grid, tn, bm, npaths, ntime, D, p, scale_fun, lam, plot)
-
+def synthetic_test2(param, grid, tn, bm, npaths, ntime, D, p, plot=True):
+    metric_tensor, volume_density = learn_metric_tensor_2d(grid, tn, bm, npaths, ntime, D, p, plot)
     aux = None
     # Now for the exact values
     if aux is None:
