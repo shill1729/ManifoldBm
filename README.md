@@ -96,7 +96,7 @@ plt.show();
 
 ```
 This should produce an image like this:
-
+![Estimation plot](Images/3dEstimation.png)
 
 
 
