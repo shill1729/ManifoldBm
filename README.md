@@ -50,3 +50,53 @@ print(bm)
 print(bm.manifold)
     
 ```
+
+## Estimation: Learning the metric tensor by running Brownian motions
+A simple albeit inefficient algorithm to estimate the metric 
+tensor of a manifold, having access to extrinsic sample paths, is
+to simple take covariances of each pair of coordinates across the 
+ensemble of paths, divide by the time horizon, and then perform an
+eigendecomposition. The metric tensor can be recovered carefully through
+the eigenvectors. See the paper (where?) or more details.
+
+```python
+from ManifoldBm.ManifoldLearn import *
+
+tn = 10**-6
+C = 0.2
+a = -1
+b = 1
+nens = 20
+npaths = 20
+ntime = 10
+# 2D grid
+x0, y0 = np.mgrid[a:b:nens * 1j, a:b:nens * 1j]
+grid = (x0, y0)
+
+# Setting up the synthetic process
+x, y, z = symbols("x y z", real=True)
+F = exp(-x**2-y**2)
+f = F - z
+# Now we can set up an instrinsic BM
+param = Matrix([x, y])
+chart = Matrix([x, y, solve(f, z)[-1]])
+d = param.shape[0]
+D = chart.shape[0]
+dim = (D, d)
+print("Extrinsic vs Intrinsic dim =" + str(dim))
+print("Chart")
+print(chart)
+bm = IntrinsicBm(param, chart)
+print(bm)
+print(bm.manifold)
+drift, diffusion = bm.get_bm_coefs(d)
+fig = plt.figure(figsize=(6, 6))
+synthetic_test2(param, grid, tn, bm, npaths, ntime, D, None, True)
+plt.show();
+
+```
+This should produce an image like this:
+
+
+
+
