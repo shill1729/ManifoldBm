@@ -64,7 +64,7 @@ the algorithm is as follows:
 2. Approximate the orthogonal projection matrix $P$ as $\frac{1}{h} S$ where $S$ is the sample covariance matrix of the terminal values.
 3. Compute the eigendecomposition of $P$. Let $v_1(x),\dotsc, v_p(x)$ be the eigenvectors associated to the $p=D-d$ smallest eigenvalues.
 4. The Jacobian of the (assumed) function defining the chart $(x_1,\dotsc, x_d, F(x_1,\dotsc, x_d))$ can be recovered as $J_i= -\pi(v_i(x))^T/\pi_{d+i}(v_i(x))$, where $J_i$ is the $i$-th row of $J$. Here $\pi_{d+i}(v)$ is $d+i$-th coordinate of $v$, while $\pi(v)$ is the first $d$ coordinates of $v$.
-5. The metric tensor is then $g=I+J^TJ$.
+5. The metric tensor at $y=\pi(x)$ is then $g(y)=I+J(y)^TJ(y)$.
 ```python
 from ManifoldBm.ManifoldLearn import *
 
