@@ -250,39 +250,18 @@ def sample_path_coord(param, coord, xt, aux=None, p=None):
     return output
 
 
-class mle(object):
-    def __init__(self, h, a, b, c, d, bds):
-        self.h = h
-        self.a = a
-        self.b = b
-        self.c = c
-        self.d = d
-        self.bds = bds
-
-    def z(self, theta):
-        a = self.a
-        b = self.b
-        c = self.c
-        d = self.d
-        return dblquad(lambda u, v: self.h(np.array([u, v]), theta), a, b, c, d)[0]
-
-    def ll(self, theta, X):
-        n = X.shape[0]
-        return -(np.sum(np.log(self.h(X, theta)), axis=0) - n * np.log(self.z(theta)))
-
-    def fit(self, X, theta0):
-        w = minimize(self.ll, theta0, args=X)
-        print("Unconstrained optimization")
-        print(w)
-        print("\n")
-        return minimize(self.ll, theta0, args=X, method="L-BFGS-B", bounds=self.bds)
-
-
 class Manifold(object):
     """
         Python implementaiton of a manifold given a local chart based on
         parameters. The objects to initialize are param, chart, simp=False.
         These must be sympy Matrix objects.
+
+    Attributes:
+        param: a sympy dx1 matrix, the intrinsic coordinates of the manifold
+        chart: a sympy Dx1 matrix, the extrinsic coordinates of the manifold, D>d
+
+    Methods:
+        TBA...
     """
     # How should we implement Manifold in python?
     # The user supplies the intrinsic coordinates and the local chart
@@ -342,6 +321,18 @@ class Manifold(object):
 
 class IntrinsicBm(object):
     """ Define an intrinsic Brownian motion given a parameter set and chart.
+
+    Attributes:
+        param: sympy matrix of the intrinsic parameters.
+        chart: sympy matrix for the function F in (x,F(x)) defining the local chart.
+        aux: any auxilliary parameters for the chart.
+        manifold: optionally pass a manifold class object.
+        simp: boolean for simplifications in sympy functions
+
+    Methods:
+        get_bm_coefs: return coefficient functions used for numerical simulations
+        uniform_sample: for a compact manifold, you can uniformly sample on it by running a BM for a long time.
+
     """
     def __init__(self, param=None, chart=None, aux=None, manifold=None, simp=True):
         self.sigma_np = None

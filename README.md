@@ -51,6 +51,66 @@ print(bm.manifold)
     
 ```
 
+## Simulating sample paths
+While the code provided can simulate any autonomous SDE:
+$$dX_t = \mu(X_t) dt+ \sigma(X_t)dB_t,$$
+we shall demonstrate the pipeline for simulating BMs on manifolds.
+
+```python
+from ManifoldBm.ManifoldLearn import *
+tn = 5
+C = 0.2
+a = -1
+b = 1
+nens = 1
+npaths = 50
+ntime = 5000
+x0 = np.array([1, 1])
+
+# Setting up the synthetic process
+x, y, z = symbols("x y z", real=True)
+F = exp(-x**2-y**2)
+f = F - z
+# Now we can set up an instrinsic BM
+param = Matrix([x, y])
+chart = Matrix([x, y, solve(f, z)[-1]])
+d = param.shape[0]
+D = chart.shape[0]
+dim = (D, d)
+print("Extrinsic vs Intrinsic dim =" + str(dim))
+print("Chart")
+print(chart)
+bm = IntrinsicBm(param, chart)
+print(bm)
+print(bm.manifold)
+drift, diffusion = bm.get_bm_coefs(d)
+# Simulate an ensemble of sample paths
+Y = sample_ensemble(x0, tn, drift, diffusion, npaths, ntime, d, d)
+X = np.zeros((npaths, ntime + 1, D))
+for i in range(npaths):
+    if len(Y.shape) == 2:  # d=1 then ensemble is (n+1, N)
+        X[i] = sample_path_coord(bm.manifold.param, bm.manifold.chart, Y[:, i])
+    else:  # d>1 then ensemble is (N, n+1, d)
+        X[i] = sample_path_coord(bm.manifold.param, bm.manifold.chart, Y[i])
+
+fig = plt.figure(figsize=(8, 8))
+for j in range(npaths):
+    if D == 2:
+        plt.plot(X[j][:, 0], X[j][:, 1], alpha=0.5)
+    elif D == 3:
+        ax = plt.subplot(projection='3d')
+        ax.plot3D(X[j][:, 0], X[j][:, 1], X[j][:, 2], alpha=0.5)
+plt.title("Extrinsic sample paths")
+plt.show()
+
+```
+This should produce an image like
+![Ensemble](Images/SamplePath.png)
+
+As obviously seen, if you can run lots of Brownian motions on an unknown manifold, 
+you will eventually recover its geometry. In the next section we demonstrate this from
+a slightly different perpsective.
+
 ## Estimation: Learning the metric tensor by running Brownian motions
 A simple albeit inefficient algorithm to estimate the metric 
 tensor of a manifold, having access to extrinsic sample paths, is
