@@ -117,7 +117,7 @@ tensor of a manifold, having access to extrinsic sample paths, is
 to simple take covariances of each pair of coordinates across the 
 ensemble of paths, divide by the time horizon, and then perform an
 eigendecomposition. The metric tensor can be recovered carefully through
-the eigenvectors. See the paper (where?) for more details, but briefly,
+the eigenvectors. Briefly,
 the algorithm is as follows:
 
 1. Observe $N$ sample paths of an extrinsic Brownian motion over a small time interval $[0,h]$ starting from a point $x\in \mathbb{R}^D$.
