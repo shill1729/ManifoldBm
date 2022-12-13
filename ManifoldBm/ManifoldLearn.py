@@ -6,9 +6,9 @@ from scipy.integrate import cumulative_trapezoid
 from scipy.optimize import minimize
 from sympy import symbols, Matrix, solve, lambdify, sin, exp
 
-from ManifoldBms.ManifoldBm.RiemannianGeo import IntrinsicBm, sample_path_coord
-from ManifoldBms.ManifoldBm.sdes import estimate_cov
-from ManifoldBms.ManifoldBm.sdes import sample_ensemble
+from ManifoldBm.RiemannianGeo import IntrinsicBm, sample_path_coord
+from ManifoldBm.sdes import estimate_cov
+from ManifoldBm.sdes import sample_ensemble
 
 
 def metric_tensor_decomp(proj, d=1, scale=1):
@@ -28,17 +28,16 @@ def metric_tensor_decomp(proj, d=1, scale=1):
     p = extrinsic_dim - d
     jacobian = np.zeros((p, d))
     for i in range(p):
-        entry = v[d+i, i]
+        entry = v[d + i, i]
         jacobian[i, :] = -v[:d, i].T
-        # vector_zero = np.sum(v[d:, i]) - entry
-        # vector_zero = np.abs(vector_zero) <= 0.01
-        if entry != 0 :
+        if entry != 0:
             jacobian[i, :] = jacobian[i, :] / entry
     metric_tensor = np.eye(d) + jacobian.T.dot(jacobian)  # dot is safer shape wise
     volume_density = np.sqrt(np.linalg.det(metric_tensor))
     return metric_tensor, volume_density, np.mean(w[:p])
 
 
+# Consider deleting?
 def learn_manifold_1d(ensembles, h=10 ** -5, d=1):
     """ Given a collection of sample ensembles of a process, estimate the intrinsic metric tensor of the assumed
     underlying manifold.
@@ -87,11 +86,15 @@ def learn_metric_tensor(y0, tn, bm, npaths, ntime, D, p):
 
 
 def learn_metric_tensor_1d(y0, tn, bm, npaths, ntime, D, p, plot=True):
+    """ Given an intrinsic Brownian motion, learn the metric tensor by estimating the
+     orthogonal projection/covariance matrix and performing eigendecomposition
+    """
     M = y0.shape[0]
     g = np.zeros(M)
     volg = np.zeros(M)
     d = bm.manifold.param.shape[0]
     tt = np.linspace(0, tn, ntime + 1)
+    color = None
     if plot:
         # fig = plt.figure(figsize=(6, 6))
         color = plt.cm.rainbow(np.linspace(0, 1, M))
@@ -161,8 +164,8 @@ def learn_metric_tensor_2d(y0, tn, bm, npaths, ntime, D, p, plot=True):
 
 def synthetic_test1(param, x0, tn, bm, npaths, ntime, D, p, plot=True):
     # if plot:
-        # fig, ax = plt.subplots(2, 2)
-        # fig = plt.figure(figsize=(6, 6))
+    # fig, ax = plt.subplots(2, 2)
+    # fig = plt.figure(figsize=(6, 6))
     metric_tensor, volume_density = learn_metric_tensor_1d(x0, tn, bm, npaths, ntime, D, p)
     exact_vol = lambdify(param, bm.manifold.vol)
     # curve = lambdify(param, F)
@@ -233,20 +236,20 @@ def synthetic_test2(param, grid, tn, bm, npaths, ntime, D, p, plot=True):
     M = grid[0].shape[0]
     estimated_arc_length = np.zeros((M, M))
     true_arc_length = np.zeros((M, M))
-    x0 = grid[0][:,0]
+    x0 = grid[0][:, 0]
     y0 = grid[1][0, :]
     for i in range(M):
-        estimated_arc_length[i, :] = cumulative_trapezoid(volume_density[i,:], x=y0, initial=0)
-        true_arc_length[i, :] = cumulative_trapezoid(exact[i,:], x=y0, initial=0)
+        estimated_arc_length[i, :] = cumulative_trapezoid(volume_density[i, :], x=y0, initial=0)
+        true_arc_length[i, :] = cumulative_trapezoid(exact[i, :], x=y0, initial=0)
     for i in range(M):
-        estimated_arc_length[:, i] = cumulative_trapezoid(estimated_arc_length[:,i], x=x0, initial=0)
-        true_arc_length[:, i] = cumulative_trapezoid(true_arc_length[:,i], x=x0, initial=0)
+        estimated_arc_length[:, i] = cumulative_trapezoid(estimated_arc_length[:, i], x=x0, initial=0)
+        true_arc_length[:, i] = cumulative_trapezoid(true_arc_length[:, i], x=x0, initial=0)
 
     mse = np.mean((true_arc_length - estimated_arc_length) ** 2)
     print("Mean Square Error of surface area density estimation = " + str(mse_arc_length_density))
     print("Mean Square Error of surface area estimation = " + str(mse))
     print("Total estimated surface area = " + str(estimated_arc_length[-1, -1]))
-    print("Total true surface area = " + str(true_arc_length[-1,-1]))
+    print("Total true surface area = " + str(true_arc_length[-1, -1]))
 
     if plot:
         # Plot the volume-density function

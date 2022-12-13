@@ -6,8 +6,8 @@ from scipy.optimize import minimize
 from sympy import lambdify, Piecewise
 from sympy import simplify, sqrt, symbols, Matrix, sin, cos, integrate, pi
 
-from ManifoldBms.ManifoldBm.sdes import euler_maruyama, sample_ensemble, estimate_cov
-from ManifoldBms.ManifoldBm.SympyRoutines import jacobian, divergence_matrix, gradient
+from ManifoldBm.sdes import euler_maruyama, sample_ensemble, estimate_cov
+from ManifoldBm.SympyRoutines import jacobian, divergence_matrix, gradient
 
 
 def learn_synthetic_metric(y0, bm, extrinsic_param, f, tn=10 ** -3, npaths=1000, ntime=10):
