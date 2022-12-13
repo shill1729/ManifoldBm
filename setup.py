@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='ManifoldBm',
-    version='1.2',
+    version='1.3',
     packages=['ManifoldBm'],
     url='https://github.com/shill1729/ManifoldBm',
     license='MIT',
